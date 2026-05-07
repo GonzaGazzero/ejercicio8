@@ -1,15 +1,18 @@
 package com.unidad5.ejercicio8.security;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+public final class SecurityBeansConfig {
 
-@Configuration
-public class SecurityBeansConfig {
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    private SecurityBeansConfig() {
     }
+
+    /*
+     * GUIA DE RESOLUCION
+     *
+     * Este archivo puede usarse para declarar beans auxiliares de seguridad, por ejemplo:
+     * - PasswordEncoder
+     * - AuthenticationProvider
+     * - AuthenticationManager
+     *
+     * Si se usa BCrypt, el bean mas habitual es BCryptPasswordEncoder.
+     */
 }

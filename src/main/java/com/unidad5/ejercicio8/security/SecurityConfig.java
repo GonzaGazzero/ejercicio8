@@ -1,76 +1,26 @@
 package com.unidad5.ejercicio8.security;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+public final class SecurityConfig {
 
-@Configuration
-@EnableMethodSecurity
-public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomUserDetailsService userDetailsService;
-    private final RestAuthenticationEntryPoint authenticationEntryPoint;
-    private final RestAccessDeniedHandler accessDeniedHandler;
-    private final PasswordEncoder passwordEncoder;
-
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            CustomUserDetailsService userDetailsService,
-            RestAuthenticationEntryPoint authenticationEntryPoint,
-            RestAccessDeniedHandler accessDeniedHandler,
-            PasswordEncoder passwordEncoder) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userDetailsService = userDetailsService;
-        this.authenticationEntryPoint = authenticationEntryPoint;
-        this.accessDeniedHandler = accessDeniedHandler;
-        this.passwordEncoder = passwordEncoder;
+    private SecurityConfig() {
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/libros").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/libros").hasAnyRole("BIBLIOTECARIO", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/libros/*").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/prestamos").hasRole("LECTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/prestamos").hasAnyRole("BIBLIOTECARIO", "ADMIN")
-                        .anyRequest().authenticated())
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return provider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
+    /*
+     * GUIA DE RESOLUCION
+     *
+     * Este archivo deberia concentrar la configuracion principal de Spring Security.
+     *
+     * Pasos sugeridos:
+     * 1. Anotar la clase con @Configuration.
+     * 2. Habilitar seguridad web y seguridad a nivel metodo si el ejercicio lo pide.
+     * 3. Declarar un bean SecurityFilterChain.
+     * 4. Desactivar CSRF si la API es stateless.
+     * 5. Configurar SessionCreationPolicy.STATELESS.
+     * 6. Declarar que /api/auth/register y /api/auth/login sean publicos.
+     * 7. Restringir /api/libros y /api/prestamos por rol.
+     * 8. Registrar el filtro JWT antes de UsernamePasswordAuthenticationFilter.
+     * 9. Configurar AuthenticationEntryPoint y AccessDeniedHandler para 401 y 403.
+     *
+     * En esta entrega no se implementa seguridad real.
+     */
 }
