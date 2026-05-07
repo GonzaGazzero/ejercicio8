@@ -1,48 +1,38 @@
 package com.unidad5.ejercicio8.service;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
 
-import com.unidad5.ejercicio8.dto.libro.LibroRequest;
-import com.unidad5.ejercicio8.exception.NotFoundException;
+import com.unidad5.ejercicio8.dto.LibroRequestDTO;
 import com.unidad5.ejercicio8.model.Libro;
+import com.unidad5.ejercicio8.store.LibroStore;
 
 @Service
 public class LibroService {
 
-    private final AtomicLong sequence = new AtomicLong(0);
-    private final ConcurrentHashMap<Long, Libro> libros = new ConcurrentHashMap<>();
+    private final LibroStore libroStore;
 
-    public LibroService() {
-        create(new LibroRequest("Clean Code", "Robert C. Martin"));
-        create(new LibroRequest("Effective Java", "Joshua Bloch"));
+    public LibroService(LibroStore libroStore) {
+        this.libroStore = libroStore;
     }
 
     public List<Libro> findAll() {
-        return libros.values().stream().sorted((a, b) -> a.id().compareTo(b.id())).toList();
+        return libroStore.obtenerTodos();
     }
 
-    public Libro create(LibroRequest request) {
-        Long id = sequence.incrementAndGet();
-        Libro libro = new Libro(id, request.titulo(), request.autor());
-        libros.put(id, libro);
-        return libro;
+    public Libro create(LibroRequestDTO request) {
+        Libro libro = new Libro();
+        libro.setTitulo(request.getTitulo());
+        libro.setAutor(request.getAutor());
+        return libroStore.guardar(libro);
     }
 
     public void delete(Long id) {
-        if (libros.remove(id) == null) {
-            throw new NotFoundException("Libro no encontrado");
-        }
+        libroStore.eliminar(id);
     }
 
     public Libro findById(Long id) {
-        Libro libro = libros.get(id);
-        if (libro == null) {
-            throw new NotFoundException("Libro no encontrado");
-        }
-        return libro;
+        return libroStore.buscarPorId(id);
     }
 }

@@ -2,82 +2,58 @@ package com.unidad5.ejercicio8.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
 
 import com.unidad5.ejercicio8.exception.BadRequestException;
-import com.unidad5.ejercicio8.exception.NotFoundException;
 import com.unidad5.ejercicio8.model.Libro;
 import com.unidad5.ejercicio8.model.Prestamo;
 import com.unidad5.ejercicio8.model.PrestamoEstado;
+import com.unidad5.ejercicio8.store.PrestamoStore;
 
 @Service
 public class PrestamoService {
 
-    private final AtomicLong sequence = new AtomicLong(0);
-    private final ConcurrentHashMap<Long, Prestamo> prestamos = new ConcurrentHashMap<>();
     private final LibroService libroService;
+    private final PrestamoStore prestamoStore;
 
-    public PrestamoService(LibroService libroService) {
+    public PrestamoService(LibroService libroService, PrestamoStore prestamoStore) {
         this.libroService = libroService;
+        this.prestamoStore = prestamoStore;
     }
 
     public Prestamo solicitarPrestamo(Long libroId, String username) {
         Libro libro = libroService.findById(libroId);
-        boolean tienePrestamoActivo = prestamos.values().stream()
-                .anyMatch(prestamo -> prestamo.libroId().equals(libroId)
-                        && (prestamo.estado() == PrestamoEstado.PENDIENTE
-                                || prestamo.estado() == PrestamoEstado.APROBADO));
-        if (tienePrestamoActivo) {
+        if (prestamoStore.existePrestamoActivoParaLibro(libroId)) {
             throw new BadRequestException("El libro ya tiene un prestamo activo o pendiente");
         }
 
-        Long id = sequence.incrementAndGet();
-        Prestamo prestamo = new Prestamo(
-                id,
-                libro.id(),
-                libro.titulo(),
-                username,
-                PrestamoEstado.PENDIENTE,
-                LocalDateTime.now(),
-                null);
-        prestamos.put(id, prestamo);
-        return prestamo;
+        Prestamo prestamo = new Prestamo();
+        prestamo.setLibroId(libro.getId());
+        prestamo.setTituloLibro(libro.getTitulo());
+        prestamo.setUsernameLector(username);
+        prestamo.setEstado(PrestamoEstado.PENDIENTE);
+        prestamo.setFechaSolicitud(LocalDateTime.now());
+        prestamo.setFechaAprobacion(null);
+        return prestamoStore.guardar(prestamo);
     }
 
     public List<Prestamo> findMine(String username) {
-        return prestamos.values().stream()
-                .filter(prestamo -> prestamo.usernameLector().equals(username))
-                .sorted((a, b) -> a.id().compareTo(b.id()))
-                .toList();
+        return prestamoStore.buscarPorUsername(username);
     }
 
     public List<Prestamo> findAll() {
-        return prestamos.values().stream()
-                .sorted((a, b) -> a.id().compareTo(b.id()))
-                .toList();
+        return prestamoStore.obtenerTodos();
     }
 
     public Prestamo aprobar(Long id) {
-        Prestamo prestamo = prestamos.get(id);
-        if (prestamo == null) {
-            throw new NotFoundException("Prestamo no encontrado");
-        }
-        if (prestamo.estado() == PrestamoEstado.APROBADO) {
+        Prestamo prestamo = prestamoStore.buscarPorId(id);
+        if (prestamo.getEstado() == PrestamoEstado.APROBADO) {
             throw new BadRequestException("El prestamo ya fue aprobado");
         }
 
-        Prestamo actualizado = new Prestamo(
-                prestamo.id(),
-                prestamo.libroId(),
-                prestamo.tituloLibro(),
-                prestamo.usernameLector(),
-                PrestamoEstado.APROBADO,
-                prestamo.fechaSolicitud(),
-                LocalDateTime.now());
-        prestamos.put(id, actualizado);
-        return actualizado;
+        prestamo.setEstado(PrestamoEstado.APROBADO);
+        prestamo.setFechaAprobacion(LocalDateTime.now());
+        return prestamo;
     }
 }

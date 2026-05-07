@@ -1,47 +1,66 @@
 package com.unidad5.ejercicio8.exception;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(NotFoundException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<List<String>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        List<String> errores = new ArrayList<>();
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            errores.add(fieldError.getField() + ": " + fieldError.getDefaultMessage());
+        }
+        return ResponseEntity.badRequest().body(errores);
     }
 
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiError> handleConflict(ConflictException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<List<String>> handleConstraintViolation(ConstraintViolationException ex) {
+        List<String> errores = new ArrayList<>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            String campo = extraerUltimoNodo(violation.getPropertyPath().toString());
+            errores.add(campo + ": " + violation.getMessage());
+        }
+        return ResponseEntity.badRequest().body(errores);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<String> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    public ResponseEntity<String> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<String> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGenericException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error interno del servidor. Contacte al administrador.");
+    }
+
+    private String extraerUltimoNodo(String propertyPath) {
+        int index = propertyPath.lastIndexOf('.');
+        if (index >= 0 && index < propertyPath.length() - 1) {
+            return propertyPath.substring(index + 1);
         }
-        return ResponseEntity.badRequest().body(errors);
-    }
-
-    private ResponseEntity<ApiError> buildError(HttpStatus status, String message, String path) {
-        return ResponseEntity.status(status)
-                .body(new ApiError(LocalDateTime.now(), status.value(), status.getReasonPhrase(), message, path));
+        return propertyPath;
     }
 }

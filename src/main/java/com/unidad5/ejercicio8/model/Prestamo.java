@@ -2,12 +2,22 @@ package com.unidad5.ejercicio8.model;
 
 import java.time.LocalDateTime;
 
-public record Prestamo(
-        Long id,
-        Long libroId,
-        String tituloLibro,
-        String usernameLector,
-        PrestamoEstado estado,
-        LocalDateTime fechaSolicitud,
-        LocalDateTime fechaAprobacion) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Prestamo {
+
+    private Long id;
+    private Long libroId;
+    private String tituloLibro;
+    private String usernameLector;
+    private PrestamoEstado estado;
+    private LocalDateTime fechaSolicitud;
+    private LocalDateTime fechaAprobacion;
 }

@@ -1,5 +1,6 @@
-package com.unidad5.ejercicio8.model;
+package com.unidad5.ejercicio8.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,9 +10,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Libro {
+public class LibroRequestDTO {
 
-    private Long id;
+    @NotBlank
     private String titulo;
+
+    @NotBlank
     private String autor;
 }

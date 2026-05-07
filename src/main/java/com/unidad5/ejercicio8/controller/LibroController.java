@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.unidad5.ejercicio8.dto.libro.LibroRequest;
+import com.unidad5.ejercicio8.dto.LibroRequestDTO;
 import com.unidad5.ejercicio8.model.Libro;
 import com.unidad5.ejercicio8.service.LibroService;
 
@@ -28,17 +28,23 @@ public class LibroController {
         this.libroService = libroService;
     }
 
+    // ENDPOINT 1: GET /api/libros
+    // Retorna todos los libros cargados en memoria.
     @GetMapping
     public List<Libro> getAll() {
         return libroService.findAll();
     }
 
+    // ENDPOINT 2: POST /api/libros
+    // Crea un nuevo libro en memoria.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Libro create(@Valid @RequestBody LibroRequest request) {
+    public Libro create(@Valid @RequestBody LibroRequestDTO request) {
         return libroService.create(request);
     }
 
+    // ENDPOINT 3: DELETE /api/libros/{id}
+    // Elimina un libro por id.
     @DeleteMapping("/{id}")
     public String delete(@PathVariable Long id) {
         libroService.delete(id);
