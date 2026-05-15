@@ -3,6 +3,7 @@ package com.unidad5.ejercicio8.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,24 +29,21 @@ public class LibroController {
         this.libroService = libroService;
     }
 
-    // ENDPOINT 1: GET /api/libros
-    // Retorna todos los libros cargados en memoria.
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public List<Libro> getAll() {
         return libroService.findAll();
     }
 
-    // ENDPOINT 2: POST /api/libros
-    // Crea un nuevo libro en memoria.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
     public Libro create(@Valid @RequestBody LibroRequestDTO request) {
         return libroService.create(request);
     }
 
-    // ENDPOINT 3: DELETE /api/libros/{id}
-    // Elimina un libro por id.
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String delete(@PathVariable Long id) {
         libroService.delete(id);
         return "Libro eliminado correctamente";

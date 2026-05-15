@@ -1,17 +1,10 @@
 package com.unidad5.ejercicio8.controller;
 
 import java.util.List;
-
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import com.unidad5.ejercicio8.dto.PrestamoRequestDTO;
 import com.unidad5.ejercicio8.model.Prestamo;
@@ -29,31 +22,27 @@ public class PrestamoController {
         this.prestamoService = prestamoService;
     }
 
-    // ENDPOINT 4: POST /api/prestamos
-    // Solicita un prestamo indicando libro y username.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Prestamo solicitar(@Valid @RequestBody PrestamoRequestDTO request) {
-        return prestamoService.solicitarPrestamo(request.getLibroId(), request.getUsername());
+    @PreAuthorize("hasRole('LECTOR')")
+    public Prestamo solicitar(@Valid @RequestBody PrestamoRequestDTO request, Authentication authentication) {
+        return prestamoService.solicitarPrestamo(request.getLibroId(), authentication.getName());
     }
 
-    // ENDPOINT 5: GET /api/prestamos/mis-prestamos
-    // Retorna los prestamos del usuario indicado.
     @GetMapping("/mis-prestamos")
-    public List<Prestamo> misPrestamos(@RequestParam String username) {
-        return prestamoService.findMine(username);
+    @PreAuthorize("hasRole('LECTOR')")
+    public List<Prestamo> misPrestamos(Authentication authentication) {
+        return prestamoService.findMine(authentication.getName());
     }
 
-    // ENDPOINT 6: GET /api/prestamos
-    // Retorna todos los prestamos cargados.
     @GetMapping
+    @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
     public List<Prestamo> getAll() {
         return prestamoService.findAll();
     }
 
-    // ENDPOINT 7: PUT /api/prestamos/{id}/aprobar
-    // Cambia el estado del prestamo a APROBADO.
     @PutMapping("/{id}/aprobar")
+    @PreAuthorize("hasRole('BIBLIOTECARIO')")
     public Prestamo aprobar(@PathVariable Long id) {
         return prestamoService.aprobar(id);
     }

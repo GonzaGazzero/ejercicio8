@@ -1,17 +1,24 @@
 package com.unidad5.ejercicio8.config;
 
-public final class SwaggerConfig {
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-    private SwaggerConfig() {
+@Configuration
+public class SwaggerConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .addSecurityItem(new SecurityRequirement().addList("BearerAuth"))
+                .components(new Components().addSecuritySchemes("BearerAuth", new SecurityScheme()
+                        .name("BearerAuth")
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")));
     }
-
-    /*
-     * ESTRUCTURA GUIA
-     *
-     * Se agrega este archivo para mantener una organizacion parecida al proyecto
-     * de referencia. Si mas adelante queres documentar la API, este package puede
-     * alojar la configuracion de OpenAPI / Swagger.
-     *
-     * En esta entrega no se incorpora esa dependencia ni su implementacion.
-     */
 }
+
